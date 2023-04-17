@@ -131,37 +131,15 @@ RUN curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o /tmp/awscli
     && aws --version
 
 # Install env tools for runtimes
-# Dotnet
-ENV PATH "/root/.dotnet/:/root/.dotnet/tools/:$PATH"
-RUN set -ex  \
-&& wget -qO /usr/local/bin/dotnet-install.sh https://dot.net/v1/dotnet-install.sh \
-&& chmod +x /usr/local/bin/dotnet-install.sh
-
 #nodejs
 ARG SRC_DIR="/usr/src"
 ARG N_SRC_DIR="$SRC_DIR/n"
 RUN git clone https://github.com/tj/n $N_SRC_DIR \
      && cd $N_SRC_DIR && make install 
 
-#ruby
-ARG RBENV_SRC_DIR="/usr/local/rbenv"
-
-ENV PATH="/root/.rbenv/shims:$RBENV_SRC_DIR/bin:$RBENV_SRC_DIR/shims:$PATH" \
-    RUBY_BUILD_SRC_DIR="$RBENV_SRC_DIR/plugins/ruby-build"
-
-RUN set -ex \
-    && git clone https://github.com/rbenv/rbenv.git $RBENV_SRC_DIR \
-    && mkdir -p $RBENV_SRC_DIR/plugins \
-    && git clone https://github.com/rbenv/ruby-build.git $RUBY_BUILD_SRC_DIR \
-    && sh $RUBY_BUILD_SRC_DIR/install.sh
-
 #python
 RUN curl https://pyenv.run | bash
 ENV PATH="/root/.pyenv/shims:/root/.pyenv/bin:$PATH"
-
-#php
-RUN curl -L https://raw.githubusercontent.com/phpenv/phpenv-installer/master/bin/phpenv-installer | bash
-ENV PATH="/root/.phpenv/shims:/root/.phpenv/bin:$PATH"
 
 #go
 RUN git clone https://github.com/syndbg/goenv.git $HOME/.goenv
@@ -229,17 +207,6 @@ RUN     n $NODE_14_VERSION && npm install --save-dev -g -f grunt && npm install 
 
 #****************      END NODEJS     ****************************************************
 
-#**************** RUBY *********************************************************
-
-ENV RUBY_26_VERSION="2.6.10"
-ENV RUBY_27_VERSION="2.7.7"
-
-RUN    rbenv install $RUBY_26_VERSION && rm -rf /tmp/* \
-    && rbenv install $RUBY_27_VERSION && rm -rf /tmp/* \
-    && rbenv global $RUBY_27_VERSION && ruby -v
-
-#**************** END RUBY *****************************************************
-
 #**************** PYTHON *****************************************************
 ENV PYTHON_37_VERSION="3.7.16"
 ENV PYTHON_38_VERSION="3.8.16"
@@ -274,33 +241,10 @@ RUN set -ex \
 
 #**************** END PYTHON *****************************************************
 
-#****************      PHP     ****************************************************
-ENV PHP_73_VERSION="7.3.33"
-ENV PHP_74_VERSION="7.4.33"
-ENV PHP_80_VERSION="8.0.26"
-
-RUN curl -L https://raw.githubusercontent.com/phpenv/phpenv-installer/master/bin/phpenv-installer | bash
-ENV PATH="/root/.phpenv/shims:/root/.phpenv/bin:$PATH"
-COPY tools/runtime_configs/php/$PHP_73_VERSION /root/.phpenv/plugins/php-build/share/php-build/definitions/$PHP_73_VERSION
-RUN phpenv install $PHP_73_VERSION && rm -rf /tmp/* && phpenv global $PHP_73_VERSION
-RUN echo "memory_limit = 1G;" >> "/root/.phpenv/versions/$PHP_73_VERSION/etc/conf.d/memory.ini"
-
-COPY tools/runtime_configs/php/$PHP_74_VERSION /root/.phpenv/plugins/php-build/share/php-build/definitions/$PHP_74_VERSION
-RUN phpenv install $PHP_74_VERSION && rm -rf /tmp/* && phpenv global $PHP_74_VERSION
-RUN echo "memory_limit = 1G;" >> "/root/.phpenv/versions/$PHP_74_VERSION/etc/conf.d/memory.ini"
-
-COPY tools/runtime_configs/php/$PHP_80_VERSION /root/.phpenv/plugins/php-build/share/php-build/definitions/$PHP_80_VERSION
-RUN phpenv install $PHP_80_VERSION && rm -rf /tmp/* && phpenv global $PHP_80_VERSION
-RUN echo "memory_limit = 1G;" >> "/root/.phpenv/versions/$PHP_80_VERSION/etc/conf.d/memory.ini"
-
-# Install Composer globally
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/bin --filename=composer
-#****************      END PHP     ****************************************************
-
 #****************     GOLANG     ****************************************************
 ENV GOLANG_15_VERSION="1.15.15"
 ENV GOLANG_16_VERSION="1.16.15"
-ENV GOLANG_19_VERSION="1.19.15"
+ENV GOLANG_19_VERSION="1.19.5"
 
 RUN goenv install $GOLANG_19_VERSION && rm -rf /tmp/* && \
     goenv global  $GOLANG_19_VERSION
@@ -452,8 +396,6 @@ FROM runtimes_n_corretto AS std_v5
 # Activate runtime versions specific to image version.
 RUN n $NODE_14_VERSION
 RUN pyenv  global $PYTHON_39_VERSION
-RUN phpenv global $PHP_80_VERSION
-RUN rbenv  global $RUBY_27_VERSION
 RUN goenv global  $GOLANG_19_VERSION
 
 # Configure SSH
