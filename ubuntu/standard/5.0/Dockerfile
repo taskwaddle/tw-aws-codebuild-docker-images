@@ -242,79 +242,79 @@ ENV JAVA_HOME="$JAVA_11_HOME" \
 
 ENV PATH="${PATH}:/opt/tools"
 
-RUN set -ex \
-    && apt-get update \
-    && apt-get install -y -qq software-properties-common apt-utils \
-    # Install Corretto 8
-    && wget -qO- https://apt.corretto.aws/corretto.key | apt-key add - \
-    && add-apt-repository 'deb https://apt.corretto.aws stable main' \
-    && apt-get update \
-    && apt-get install -y -qq java-1.8.0-amazon-corretto-jdk \
-    && apt-get install -y -qq --no-install-recommends ca-certificates-java \
-    # Ensure Java cacerts symlink points to valid location
-    && update-ca-certificates -f \
-    && dpkg --add-architecture i386 \
-    && apt-get update \
-    && apt-get install -y -qq --force-yes libc6-i386 \
-       lib32stdc++6 lib32gcc1 lib32ncurses6 \
-       lib32z1 libqt5widgets5 
+# RUN set -ex \
+#     && apt-get update \
+#     && apt-get install -y -qq software-properties-common apt-utils \
+#     # Install Corretto 8
+#     && wget -qO- https://apt.corretto.aws/corretto.key | apt-key add - \
+#     && add-apt-repository 'deb https://apt.corretto.aws stable main' \
+#     && apt-get update \
+#     && apt-get install -y -qq java-1.8.0-amazon-corretto-jdk \
+#     && apt-get install -y -qq --no-install-recommends ca-certificates-java \
+#     # Ensure Java cacerts symlink points to valid location
+#     && update-ca-certificates -f \
+#     && dpkg --add-architecture i386 \
+#     && apt-get update \
+#     && apt-get install -y -qq --force-yes libc6-i386 \
+#        lib32stdc++6 lib32gcc1 lib32ncurses6 \
+#        lib32z1 libqt5widgets5 
 
-RUN set -ex \
-    # Install Corretto 11
-    # Note: We will use update-alternatives to make sure JDK11 has higher priority for all the tools
-    && apt-get install -y -qq java-11-amazon-corretto-jdk \
-    && for tool_path in $JAVA_HOME/bin/*; do \
-          tool=`basename $tool_path`; \
-          update-alternatives --install /usr/bin/$tool $tool $tool_path 10000; \
-          update-alternatives --set $tool $tool_path; \
-        done \
-     && rm $JAVA_HOME/lib/security/cacerts && ln -s /etc/ssl/certs/java/cacerts $JAVA_HOME/lib/security/cacerts \
-    # Install Ant
-    && curl -LSso /var/tmp/apache-ant-$ANT_VERSION-bin.tar.gz https://archive.apache.org/dist/ant/binaries/apache-ant-$ANT_VERSION-bin.tar.gz  \
-    && echo "$ANT_DOWNLOAD_SHA512 /var/tmp/apache-ant-$ANT_VERSION-bin.tar.gz" | sha512sum -c - \
-    && tar -xzf /var/tmp/apache-ant-$ANT_VERSION-bin.tar.gz -C /opt \
-    && rm /var/tmp/apache-ant-$ANT_VERSION-bin.tar.gz \
-    && update-alternatives --install /usr/bin/ant ant /opt/apache-ant-$ANT_VERSION/bin/ant 10000 
+# RUN set -ex \
+#     # Install Corretto 11
+#     # Note: We will use update-alternatives to make sure JDK11 has higher priority for all the tools
+#     && apt-get install -y -qq java-11-amazon-corretto-jdk \
+#     && for tool_path in $JAVA_HOME/bin/*; do \
+#           tool=`basename $tool_path`; \
+#           update-alternatives --install /usr/bin/$tool $tool $tool_path 10000; \
+#           update-alternatives --set $tool $tool_path; \
+#         done \
+#      && rm $JAVA_HOME/lib/security/cacerts && ln -s /etc/ssl/certs/java/cacerts $JAVA_HOME/lib/security/cacerts \
+#     # Install Ant
+#     && curl -LSso /var/tmp/apache-ant-$ANT_VERSION-bin.tar.gz https://archive.apache.org/dist/ant/binaries/apache-ant-$ANT_VERSION-bin.tar.gz  \
+#     && echo "$ANT_DOWNLOAD_SHA512 /var/tmp/apache-ant-$ANT_VERSION-bin.tar.gz" | sha512sum -c - \
+#     && tar -xzf /var/tmp/apache-ant-$ANT_VERSION-bin.tar.gz -C /opt \
+#     && rm /var/tmp/apache-ant-$ANT_VERSION-bin.tar.gz \
+#     && update-alternatives --install /usr/bin/ant ant /opt/apache-ant-$ANT_VERSION/bin/ant 10000 
 
-RUN set -ex \
-    # Install Maven
-    && mkdir -p $MAVEN_HOME \
-    && curl -LSso /var/tmp/apache-maven-$MAVEN_VERSION-bin.tar.gz https://archive.apache.org/dist/maven/maven-3/$MAVEN_VERSION/binaries/apache-maven-$MAVEN_VERSION-bin.tar.gz \
-    && echo "$MAVEN_DOWNLOAD_SHA512 /var/tmp/apache-maven-$MAVEN_VERSION-bin.tar.gz" | sha512sum -c - \
-    && tar xzf /var/tmp/apache-maven-$MAVEN_VERSION-bin.tar.gz -C $MAVEN_HOME --strip-components=1 \
-    && rm /var/tmp/apache-maven-$MAVEN_VERSION-bin.tar.gz \
-    && update-alternatives --install /usr/bin/mvn mvn /opt/maven/bin/mvn 10000 \
-    && mkdir -p $MAVEN_CONFIG_HOME \
-    # Install Gradle
-    && mkdir -p $GRADLE_PATH \
-    && for version in $INSTALLED_GRADLE_VERSIONS; do { \
-       wget -q "https://services.gradle.org/distributions/gradle-$version-all.zip" -O "$GRADLE_PATH/gradle-$version-all.zip" \
-       && unzip -q "$GRADLE_PATH/gradle-$version-all.zip" -d /usr/local \
-       && echo "$GRADLE_DOWNLOADS_SHA256" | grep "$version" | sed "s|$version|$GRADLE_PATH/gradle-$version-all.zip|" | sha256sum -c - \
-       && rm "$GRADLE_PATH/gradle-$version-all.zip" \
-       && mkdir "/tmp/gradle-$version" \
-       && "/usr/local/gradle-$version/bin/gradle" -p "/tmp/gradle-$version" wrapper \
-       # Android Studio uses the "-all" distribution for it's wrapper script.
-       && perl -pi -e "s/gradle-$version-bin.zip/gradle-$version-all.zip/" "/tmp/gradle-$version/gradle/wrapper/gradle-wrapper.properties" \
-       && "/tmp/gradle-$version/gradlew" -p "/tmp/gradle-$version" init \
-       && rm -rf "/tmp/gradle-$version" \
-       && if [ "$version" != "$GRADLE_VERSION" ]; then rm -rf "/usr/local/gradle-$version"; fi; \
-     }; done \
-    # Install default GRADLE_VERSION to path
-    && ln -s /usr/local/gradle-$GRADLE_VERSION/bin/gradle /usr/bin/gradle \
-    && rm -rf $GRADLE_PATH \
-    # Install SBT
-    && curl -fSL "https://github.com/sbt/sbt/releases/download/v${SBT_VERSION}/sbt-${SBT_VERSION}.tgz" -o sbt.tgz \
-    && echo "${SBT_DOWNLOAD_SHA256} *sbt.tgz" | sha256sum -c - \
-    && tar xzf sbt.tgz -C /usr/local/bin/ \
-    && rm sbt.tgz \
-    && for version in $LOG4J_UNSAFE_VERSIONS; do find / -name log4j*-$version.jar | xargs rm -f; done
+# RUN set -ex \
+#     # Install Maven
+#     && mkdir -p $MAVEN_HOME \
+#     && curl -LSso /var/tmp/apache-maven-$MAVEN_VERSION-bin.tar.gz https://archive.apache.org/dist/maven/maven-3/$MAVEN_VERSION/binaries/apache-maven-$MAVEN_VERSION-bin.tar.gz \
+#     && echo "$MAVEN_DOWNLOAD_SHA512 /var/tmp/apache-maven-$MAVEN_VERSION-bin.tar.gz" | sha512sum -c - \
+#     && tar xzf /var/tmp/apache-maven-$MAVEN_VERSION-bin.tar.gz -C $MAVEN_HOME --strip-components=1 \
+#     && rm /var/tmp/apache-maven-$MAVEN_VERSION-bin.tar.gz \
+#     && update-alternatives --install /usr/bin/mvn mvn /opt/maven/bin/mvn 10000 \
+#     && mkdir -p $MAVEN_CONFIG_HOME \
+#     # Install Gradle
+#     && mkdir -p $GRADLE_PATH \
+#     && for version in $INSTALLED_GRADLE_VERSIONS; do { \
+#        wget -q "https://services.gradle.org/distributions/gradle-$version-all.zip" -O "$GRADLE_PATH/gradle-$version-all.zip" \
+#        && unzip -q "$GRADLE_PATH/gradle-$version-all.zip" -d /usr/local \
+#        && echo "$GRADLE_DOWNLOADS_SHA256" | grep "$version" | sed "s|$version|$GRADLE_PATH/gradle-$version-all.zip|" | sha256sum -c - \
+#        && rm "$GRADLE_PATH/gradle-$version-all.zip" \
+#        && mkdir "/tmp/gradle-$version" \
+#        && "/usr/local/gradle-$version/bin/gradle" -p "/tmp/gradle-$version" wrapper \
+#        # Android Studio uses the "-all" distribution for it's wrapper script.
+#        && perl -pi -e "s/gradle-$version-bin.zip/gradle-$version-all.zip/" "/tmp/gradle-$version/gradle/wrapper/gradle-wrapper.properties" \
+#        && "/tmp/gradle-$version/gradlew" -p "/tmp/gradle-$version" init \
+#        && rm -rf "/tmp/gradle-$version" \
+#        && if [ "$version" != "$GRADLE_VERSION" ]; then rm -rf "/usr/local/gradle-$version"; fi; \
+#      }; done \
+#     # Install default GRADLE_VERSION to path
+#     && ln -s /usr/local/gradle-$GRADLE_VERSION/bin/gradle /usr/bin/gradle \
+#     && rm -rf $GRADLE_PATH \
+#     # Install SBT
+#     && curl -fSL "https://github.com/sbt/sbt/releases/download/v${SBT_VERSION}/sbt-${SBT_VERSION}.tgz" -o sbt.tgz \
+#     && echo "${SBT_DOWNLOAD_SHA256} *sbt.tgz" | sha256sum -c - \
+#     && tar xzf sbt.tgz -C /usr/local/bin/ \
+#     && rm sbt.tgz \
+#     && for version in $LOG4J_UNSAFE_VERSIONS; do find / -name log4j*-$version.jar | xargs rm -f; done
 
 ENV PATH "/usr/local/bin/sbt/bin:$PATH"
 RUN sbt version -Dsbt.rootdir=true
 # Cleanup
-RUN rm -fr /var/lib/apt/lists/* /tmp/* /var/tmp/* \
-    && apt-get clean
+# RUN rm -fr /var/lib/apt/lists/* /tmp/* /var/tmp/* \
+#     && apt-get clean
 #****************     END JAVA     ****************************************************
 
 #****************        DOCKER    *********************************************
@@ -352,7 +352,7 @@ VOLUME /var/lib/docker
 FROM runtimes_n_corretto AS std_v5
 
 # Activate runtime versions specific to image version.
-RUN n $NODE_14_VERSION
+# RUN n $NODE_14_VERSION
 RUN pyenv  global $PYTHON_39_VERSION
 RUN goenv global  $GOLANG_19_VERSION
 
