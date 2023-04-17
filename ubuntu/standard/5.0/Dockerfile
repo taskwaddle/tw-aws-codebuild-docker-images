@@ -207,7 +207,7 @@ ENV GOLANG_19_VERSION="1.19.5"
 RUN goenv install $GOLANG_19_VERSION && rm -rf /tmp/* && \
     goenv global  $GOLANG_19_VERSION
 
-RUN go get -u github.com/golang/dep/cmd/dep
+# RUN go get -u github.com/golang/dep/cmd/dep
 #****************      END GOLANG     *******************************
 
 #=======================End of layer: runtimes  =================
