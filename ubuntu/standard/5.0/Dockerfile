@@ -280,7 +280,7 @@ ENV PATH="${PATH}:/opt/tools"
 #     && for version in $LOG4J_UNSAFE_VERSIONS; do find / -name log4j*-$version.jar | xargs rm -f; done
 
 ENV PATH "/usr/local/bin/sbt/bin:$PATH"
-RUN sbt version -Dsbt.rootdir=true
+# RUN sbt version -Dsbt.rootdir=true
 # Cleanup
 # RUN rm -fr /var/lib/apt/lists/* /tmp/* /var/tmp/* \
 #     && apt-get clean
