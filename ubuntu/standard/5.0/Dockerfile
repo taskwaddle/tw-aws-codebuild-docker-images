@@ -300,10 +300,10 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/bin -
 #****************     GOLANG     ****************************************************
 ENV GOLANG_15_VERSION="1.15.15"
 ENV GOLANG_16_VERSION="1.16.15"
+ENV GOLANG_19_VERSION="1.19.15"
 
-RUN goenv install $GOLANG_15_VERSION && rm -rf /tmp/* && \
-    goenv install $GOLANG_16_VERSION && rm -rf /tmp/* && \
-    goenv global  $GOLANG_15_VERSION
+RUN goenv install $GOLANG_19_VERSION && rm -rf /tmp/* && \
+    goenv global  $GOLANG_19_VERSION
 
 RUN go get -u github.com/golang/dep/cmd/dep
 #****************      END GOLANG     *******************************
@@ -454,7 +454,7 @@ RUN n $NODE_14_VERSION
 RUN pyenv  global $PYTHON_39_VERSION
 RUN phpenv global $PHP_80_VERSION
 RUN rbenv  global $RUBY_27_VERSION
-RUN goenv global  $GOLANG_15_VERSION
+RUN goenv global  $GOLANG_19_VERSION
 
 # Configure SSH
 COPY ssh_config /root/.ssh/config

@@ -22,7 +22,7 @@ Resources:
         Type: LINUX_CONTAINER
       ServiceRole: !Ref Role
       Source:
-        Location: https://github.com/taskwaddle/tw-codebuild-docker-images
+        Location: https://github.com/taskwaddle/tw-aws-codebuild-docker-images
         BuildSpec: deploy_codebuild/buildspec.yml
         ReportBuildStatus: false
         Type: GITHUB
