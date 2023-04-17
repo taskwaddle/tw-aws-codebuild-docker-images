@@ -60,37 +60,6 @@ RUN useradd codebuild-user
 
 FROM core AS tools
 
-# Install Firefox
-RUN set -ex \
-    && apt-add-repository -y "deb http://archive.canonical.com/ubuntu $(lsb_release -sc) partner" \
-    && apt-get install -y -qq firefox \
-    && firefox --version
-
-# Install GeckoDriver
-RUN set -ex \
-    && apt-get install -y -qq firefox-geckodriver \
-    && geckodriver --version
-
-# Install Chrome
-RUN set -ex \
-    && wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add - \
-    && echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" | tee /etc/apt/sources.list.d/google.list \
-    && apt-get update \
-    && apt-get install -y -qq google-chrome-stable \
-    && google-chrome --version
-
-# Install ChromeDriver
-RUN set -ex \
-    && CHROME_VERSION=`google-chrome --version | awk -F '[ .]' '{print $3"."$4"."$5}'` \
-    && CHROME_DRIVER_VERSION=`wget -qO- chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_VERSION` \
-    && wget -qO /tmp/chromedriver_linux64.zip https://chromedriver.storage.googleapis.com/$CHROME_DRIVER_VERSION/chromedriver_linux64.zip \
-    && unzip -q /tmp/chromedriver_linux64.zip -d /opt \
-    && rm /tmp/chromedriver_linux64.zip \
-    && mv /opt/chromedriver /opt/chromedriver-$CHROME_DRIVER_VERSION \
-    && chmod 755 /opt/chromedriver-$CHROME_DRIVER_VERSION \
-    && ln -s /opt/chromedriver-$CHROME_DRIVER_VERSION /usr/bin/chromedriver \
-    && chromedriver --version
-
 # Install stunnel
 RUN set -ex \
    && STUNNEL_VERSION=5.67 \
@@ -132,10 +101,10 @@ RUN curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o /tmp/awscli
 
 # Install env tools for runtimes
 #nodejs
-ARG SRC_DIR="/usr/src"
-ARG N_SRC_DIR="$SRC_DIR/n"
-RUN git clone https://github.com/tj/n $N_SRC_DIR \
-     && cd $N_SRC_DIR && make install 
+# ARG SRC_DIR="/usr/src"
+# ARG N_SRC_DIR="$SRC_DIR/n"
+# RUN git clone https://github.com/tj/n $N_SRC_DIR \
+#      && cd $N_SRC_DIR && make install 
 
 #python
 RUN curl https://pyenv.run | bash
@@ -153,15 +122,15 @@ FROM tools AS runtimes
 #****************      NODEJS     ****************************************************
 
 ENV NODE_12_VERSION="12.22.12"
-ENV NODE_14_VERSION="14.19.3"
+# ENV NODE_14_VERSION="14.19.3"
 
-RUN     n $NODE_14_VERSION && npm install --save-dev -g -f grunt && npm install --save-dev -g -f grunt-cli && npm install --save-dev -g -f webpack \
-     && n $NODE_12_VERSION && npm install --save-dev -g -f grunt && npm install --save-dev -g -f grunt-cli && npm install --save-dev -g -f webpack \
-     && curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - \
-     && echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list \
-     && apt-get update && apt-get install -y -qq --no-install-recommends yarn \
-     && yarn --version \
-     && cd / && rm -rf $N_SRC_DIR && rm -rf /tmp/*
+# RUN     n $NODE_14_VERSION && npm install --save-dev -g -f grunt && npm install --save-dev -g -f grunt-cli && npm install --save-dev -g -f webpack \
+#      && n $NODE_12_VERSION && npm install --save-dev -g -f grunt && npm install --save-dev -g -f grunt-cli && npm install --save-dev -g -f webpack \
+#      && curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - \
+#      && echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list \
+#      && apt-get update && apt-get install -y -qq --no-install-recommends yarn \
+#      && yarn --version \
+#      && cd / && rm -rf $N_SRC_DIR && rm -rf /tmp/*
 
 #****************      END NODEJS     ****************************************************
 
